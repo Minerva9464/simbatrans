@@ -6,7 +6,7 @@ from tqdm import tqdm
 import torch.optim as optim
 import numpy as np
 
-bitcoin_prices=pd.read_csv('Processed Prices/Bitcoin Train.csv').astype('float32').iloc[:1000, :]
+bitcoin_prices=pd.read_csv('Processed Prices/Bitcoin Train.csv').astype('float32').iloc[:, :]
 print(bitcoin_prices.head())
 print('---------------------------------------------')
 
@@ -23,16 +23,21 @@ seqlen_sum=seqlen_encoder+seqlen_decoder
 
 f=torch.sin
 p=0.1
-epoch_number=1
+epoch_number=2
 batch_size=50
 learning_rate=1e-3
+
+len_bitcoin_prices=bitcoin_prices.shape[0]
+bitcoin_prices=bitcoin_prices[0: len_bitcoin_prices-(len_bitcoin_prices%batch_size),:]
+len_bitcoin_prices=bitcoin_prices.shape[0]
+print(len_bitcoin_prices)
 
 device=torch.device('cuda:0')
 torch.set_default_device(device)
 
 transformer=Transformer(d_model, h, p, d_FF, N, seqlen_encoder, seqlen_decoder, f)
-parameters=list(transformer.parameters())
-print(parameters[0])
+# parameters=list(transformer.parameters())
+# print(parameters[0])
 # for params in parameters:
 #     print(params)
 
@@ -47,19 +52,20 @@ optimizer=optim.Adam(
 transformer.train()
 
 for epoch in range(epoch_number):
-    for row in tqdm(range(0, bitcoin_prices.shape[0], batch_size)):
+    for row in tqdm(range(0, len_bitcoin_prices, batch_size)):
         optimizer.zero_grad()
 
         inputs=bitcoin_prices[row: row+batch_size, 0:seqlen_encoder]
         outputs=bitcoin_prices[row: row+batch_size, seqlen_encoder-1: seqlen_sum-1]
-        targets=torch.tensor(bitcoin_prices[row: row+batch_size, seqlen_encoder:], dtype=torch.float32) #chizi hast ke bayad behesh beresim
+        targets=torch.tensor(bitcoin_prices[row: row+batch_size, seqlen_encoder:]) #chizi hast ke bayad behesh beresim
 
         predicted_outputs=transformer.forward(inputs, outputs).squeeze()
         loss=loss_function.forward(predicted_outputs, targets)
         loss.backward() # x.grad += dloss/dx
 
         optimizer.step() # x += -lr*x.grad
-    print(f'Epoch: {epoch}, Loss: {loss.item()}')
+        print(loss.item())
+    print(f'Epoch: {epoch+1}, Loss: {loss.item()}')
 
 torch.save(transformer, 'Models/Bitcoin Model.pth')
     

@@ -58,9 +58,9 @@ def min_max_scaler(v, crypto_name):
     new_min_maxes.to_csv('Processed Prices/Scaler.csv', index=False)
     return scaled_v
 
-
-input_length=100
-output_length=20
-data_wrangling('Bitcoin', input_length, output_length)
+if __name__ =='__main__':
+    input_length=100
+    output_length=20
+    data_wrangling('Bitcoin', input_length, output_length)
 
 

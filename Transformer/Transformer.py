@@ -55,8 +55,6 @@ class PositionalEncoding(nn.Module):
         pos=torch.arange(start=0, end=seq_len, step=1).unsqueeze(1)
         two_i=torch.arange(start=0, end=d_model-1, step=2).unsqueeze(0)
         theta=pos/(10000**(two_i/d_model))
-        # div_term=torch.exp(torch.arange(start=0, end=d_model-1, step=2)*(-torch.log(torch.tensor([10000])))/d_model)
-        # theta=pos*div_term
 
         pos_encoding[:,::2]=torch.sin(theta)
         pos_encoding[:,1::2]=torch.cos(theta)
