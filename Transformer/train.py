@@ -6,7 +6,7 @@ from tqdm import tqdm
 import torch.optim as optim
 import numpy as np
 
-bitcoin_prices=pd.read_csv('../Processed Prices/Bitcoin.csv')
+bitcoin_prices=pd.read_csv('Processed Prices/Bitcoin Train.csv').astype('float32').iloc[:1000, :]
 print(bitcoin_prices.head())
 print('---------------------------------------------')
 
@@ -23,7 +23,7 @@ seqlen_sum=seqlen_encoder+seqlen_decoder
 
 f=torch.sin
 p=0.1
-epoch_number=10
+epoch_number=1
 batch_size=50
 learning_rate=1e-3
 
@@ -59,7 +59,9 @@ for epoch in range(epoch_number):
         loss.backward() # x.grad += dloss/dx
 
         optimizer.step() # x += -lr*x.grad
-    print(f'Epoch: {epoch}, Loss: {loss.item}')
+    print(f'Epoch: {epoch}, Loss: {loss.item()}')
+
+torch.save(transformer, 'Models/Bitcoin Model.pth')
     
 
 
