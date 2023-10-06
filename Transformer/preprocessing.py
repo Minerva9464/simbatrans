@@ -30,7 +30,7 @@ def data_wrangling(crypto_name: str, input_length, output_length):
     plt.title(crypto_name, fontdict={'size':24})
     plt.xlabel('Year')
     plt.ylabel('Price (USD)')
-    plt.savefig(f'../Achievements/{crypto_name} All Time Prices.png', dpi=600)
+    plt.savefig(f'Achievements/{crypto_name} All Time Prices.png', dpi=600)
     plt.close()
     # plt.show()
 

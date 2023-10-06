@@ -215,7 +215,7 @@ class DecoderLayer(nn.Module):
 
 class Transformer(nn.Module):
     def __init__(self, d_model, h, p, d_FF, N, seqlen_encoder, seqlen_decoder, f=None) -> None:
-        super().__init__()
+        super().__init__()        
         if f is None: #yani lineare /yani f ro nadade pas az formoole linear mire
             self.input_embedding=EmbeddingLinear(d_model)
             self.output_embedding=EmbeddingLinear(d_model)
