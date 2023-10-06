@@ -46,8 +46,8 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
             loss.backward() # x.grad += dloss/dx
 
             optimizer.step() # x += -lr*x.grad
-            print(loss.item())
-        print(f'Epoch: {epoch+1}, Loss: {loss.item()}')
+            # print(loss.item())
+        # print(f'Epoch: {epoch+1}, Loss: {loss.item()}')
 
     torch.save(transformer, f'Models/{crypto_name} Model.pth')
         

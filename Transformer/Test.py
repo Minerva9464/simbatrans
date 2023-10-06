@@ -18,6 +18,7 @@ def test_model(crypto_name, seqlen_encoder, batch_size, h, N, f=None):
     crypto_prices=crypto_prices[0: len_bitcoin_prices-(len_bitcoin_prices%batch_size),:]
     len_bitcoin_prices=crypto_prices.shape[0]
 
+    # Scale Test Data:
     result=pd.read_csv('Processed Prices/Scaler.csv')
     # print(min_maxes)
     selected_crypto_min_max=result[result.CryptoName==crypto_name]
@@ -47,10 +48,9 @@ def test_model(crypto_name, seqlen_encoder, batch_size, h, N, f=None):
             mae_loss_sum+=mae_loss.item()*batch_size
         mse = mse_loss_sum/len_bitcoin_prices
         mae = mae_loss_sum/len_bitcoin_prices    
-        print(f'MSE Loss:{mse}')
-        print(f'MAE Loss:{mae}')
+        # print(f'MSE Loss:{mse}')
+        # print(f'MAE Loss:{mae}')
 
-    
     # if f is None:
     #     input_embedding='Linear'
     # else:
@@ -79,7 +79,6 @@ if __name__=='__main__':
     h=8
     N=6
     f=torch.sin
-
 
     test_model('Bitcoin', seqlen_encoder, batch_size, h, N, f)
     test_model('Ethereum', seqlen_encoder, batch_size, h, N, f)
