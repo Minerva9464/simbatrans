@@ -32,7 +32,7 @@ def get_all_prices(symbol, start_time=datetime(2001, 9, 1), end_time=datetime.no
     while (start_time.year!=end_time.year or start_time.month!=end_time.month):
         prices_data = pd.concat([prices_data, get_prices(symbol=symbol, start_time=start_time)])
         start_time = prices_data.DateTime.iloc[-1]+timedelta(hours=1)
-        print(f'Next Start Time of {coin_name} is: {start_time}')
+        # print(f'Next Start Time of {coin_name} is: {start_time}')
     
     return prices_data
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     for symbol, coin_name in zip(symbols.keys(), symbols.values()):
         prices_data = get_all_prices(symbol, start_time=start_time, end_time=end_time)
         
-        prices_data.to_csv(f'Prices/{coin_name} Prices.csv', index=False)
-        print('================================================')
-        print(f'||         {coin_name} is Saved! Yeeessss!        ||')
-        print('================================================')
+        prices_data.to_csv(f'Raw Prices/{coin_name} Prices.csv', index=False)
+        print('=================================================================')
+        print(f'||                   {coin_name} is Saved! Yeeessss!                  ||')
+        print('=================================================================')

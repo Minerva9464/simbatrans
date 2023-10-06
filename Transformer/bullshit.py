@@ -26,24 +26,32 @@
 import pandas as pd
 import numpy as np
 
-v=pd.DataFrame(np.random.random((100,1))*100)
+v=np.arange(100)
 crypto_name='Bitcoin'
 print(v)
+v=v.reshape((10,10))
+print(v)
+print(v.min())
+print(v.max())
+scaled_array= (v-v.min())/(v.max()-v.min())
+print(scaled_array)
 
-max_v=v.max()
-min_v=v.min()
-scaled_v= (v-min_v)/(max_v-min_v)
-print(max_v)
-print(scaled_v)
 
-min_maxes = pd.read_csv('../Processed Prices/Scaler.csv')
-print(min_maxes)
-print('================')
 
-new_row=pd.DataFrame({'CryptoName': crypto_name, 'Min': min_v, 'Max': max_v })
+# max_v=v.max()
+# min_v=v.min()
+# scaled_v= (v-min_v)/(max_v-min_v)
+# print(max_v)
+# print(scaled_v)
 
-new_min_maxes= pd.concat((min_maxes, new_row)).drop_duplicates(subset='CryptoName')
-new_min_maxes.to_csv('../Processed Prices/Scaler.csv', index=False)
+# min_maxes = pd.read_csv('../Processed Prices/Scaler.csv')
+# print(min_maxes)
+# print('================')
 
-print(new_min_maxes)
+# new_row=pd.DataFrame({'CryptoName': crypto_name, 'Min': min_v, 'Max': max_v })
+
+# new_min_maxes= pd.concat((min_maxes, new_row)).drop_duplicates(subset='CryptoName')
+# new_min_maxes.to_csv('../Processed Prices/Scaler.csv', index=False)
+
+# print(new_min_maxes)
 
