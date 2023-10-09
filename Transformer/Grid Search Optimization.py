@@ -48,6 +48,6 @@ for grid_node in tqdm(grid):
         )
     
     test_model(
-        grid_node['CryptoName'], seqlen_encoder, batch_size_test, 
-        grid_node['h'], grid_node['N'], grid_node['f']
+        grid_node['CryptoName'], seqlen_encoder, seqlen_decoder,
+        batch_size_test, grid_node['h'], grid_node['N'], grid_node['f']
         )

@@ -10,17 +10,16 @@ class EmbeddingLinear(nn.Module):
         #ro linear ke hover mibini khodesh bayas dare. yani aval zarb dar w mishe bad ba ye adadi jam mishe
         # in zamani farakhuni mishe ke yek shey azash besazim. va 1 vorodi migire o yek khoroji mide
 
-    def forward(self, inp) -> torch.tensor:
+    def forward(self, inp: torch.tensor) -> torch.tensor:
         # in hamon tabe __call__ hast
         """ in tabe gheymat haro migir, embedingesh ro mide
 
         Args:
-            inp (np.array): batchsize az prices. ham toye encoder ham toye decoder. Aba@d: batchsize x seqlen
+            inp (torch.tensor): batchsize az prices. ham toye encoder ham toye decoder. Aba@d: batchsize x seqlen
 
         Returns:
             torch.tensor: Matrise embedding. Aba@d: Batchsize x seqlen x dmodel
         """
-        inp=torch.tensor(inp, dtype=torch.float)
         inp=inp.unsqueeze(-1)
         # return inp
         out=self.w_embedding(inp)
@@ -36,8 +35,7 @@ class EmbeddingTime2Vec(nn.Module):
         self.non_periodic_coeffs=nn.Linear(in_features=1, out_features=1)
         self.periodic_coeffs=nn.Linear(1, d_model-1)
 
-    def forward(self, inp) -> torch.tensor:
-        inp=torch.tensor(inp, dtype=torch.float)
+    def forward(self, inp: torch.tensor) -> torch.tensor:
         inp=inp.unsqueeze(-1)
         __non_periodic=self.non_periodic_coeffs(inp)
         __periodic=self.f(self.periodic_coeffs(inp))
@@ -253,7 +251,7 @@ class Transformer(nn.Module):
         mask=torch.triu(neg_inf, diagonal=1)
         return mask
     
-    def forward(self, inputs, outputs):
+    def forward(self, inputs: torch.tensor, outputs: torch.tensor):
         out_input_embedding=self.input_embedding(inputs)
         out_pos_encoding_encoder=self.positional_encoding_encoder(out_input_embedding)
         out_output_embedding=self.output_embedding(outputs)

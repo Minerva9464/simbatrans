@@ -3,14 +3,15 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+from datetime import datetime
 
-def test_model(crypto_name, seqlen_encoder, batch_size, h, N, f=None):
-    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Test.csv').astype('float32')
-
-    crypto_prices=np.array(crypto_prices)
-
+def test_model(crypto_name, seqlen_encoder, seqlen_decoder, batch_size, h, N, f=None):
     device=torch.device('cuda:0')
     torch.set_default_device(device)
+
+    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Test.csv').astype('float32').iloc[:1000,:]
+
+    crypto_prices=torch.tensor(np.array(crypto_prices))
 
     learned_transformer=torch.load(f'Models/{crypto_name} Model.pth')
 
@@ -35,12 +36,18 @@ def test_model(crypto_name, seqlen_encoder, batch_size, h, N, f=None):
     mse_loss_sum=0
     mae_loss_sum=0
     with torch.no_grad():
-        for row in tqdm(range(0, len_bitcoin_prices, batch_size)):
+        for row in tqdm(range(0, len_bitcoin_prices, batch_size)): # Har Batch
             inputs=crypto_prices_scaled[row: row+batch_size, 0:seqlen_encoder]
-            outputs=crypto_prices_scaled[row:row+batch_size, seqlen_encoder-1:-1]
-            targets=torch.tensor(crypto_prices_scaled[row:row+batch_size, seqlen_encoder:])
+            targets=crypto_prices_scaled[row:row+batch_size, seqlen_encoder:]
+            
+            outputs=crypto_prices_scaled[row:row+batch_size, seqlen_encoder-1] # * IMPORTANT
+            outputs=outputs[:, np.newaxis] # chon outputs hamishe yek sotoon dare => dim: 200. vali mikhaim beshe 200 x 1
 
-            predicted_outputs=learned_transformer(inputs, outputs).squeeze()
+            for prediction_step in range(seqlen_decoder):
+                predicted_outputs=learned_transformer(inputs, outputs).squeeze(-1)
+                new_predicted_price=predicted_outputs[:,-1].unsqueeze(-1)
+                outputs=torch.concat((outputs, new_predicted_price), dim=1)
+
             mse_loss=mse_loss_function.forward(predicted_outputs, targets)
             mae_loss=mae_loss_function.forward(predicted_outputs, targets)
 
@@ -66,19 +73,21 @@ def test_model(crypto_name, seqlen_encoder, batch_size, h, N, f=None):
             'N': [N],
             'Input Empedding': [input_embedding],
             'MAE': [mae],
-            'MSE': [mse]
+            'MSE': [mse],
+            'DateTime': [datetime.now()],
             }
         )
     new_results= pd.concat((results, new_row))
     new_results.to_csv('Achievements/Test Results.csv', index=False)
     
-
 if __name__=='__main__':
     seqlen_encoder=100
+    seqlen_decoder=20
+
     batch_size=200
     h=8
     N=6
     f=torch.sin
 
-    test_model('Bitcoin', seqlen_encoder, batch_size, h, N, f)
-    test_model('Ethereum', seqlen_encoder, batch_size, h, N, f)
+    test_model('Bitcoin', seqlen_encoder, seqlen_decoder, batch_size, h, N, f)
+    test_model('Ethereum', seqlen_encoder, seqlen_decoder, batch_size, h, N, f)
