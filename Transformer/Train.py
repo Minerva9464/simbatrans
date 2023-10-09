@@ -11,10 +11,7 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
                 learning_rate, loss_function
                 ):
     
-    device=torch.device('cuda:0')
-    torch.set_default_device(device)
-
-    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32').iloc[:1000, :]
+    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32').iloc[:5000, :]
 
     crypto_prices=torch.tensor(np.array(crypto_prices))
 
