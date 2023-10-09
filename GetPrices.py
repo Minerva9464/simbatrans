@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import json
 import pandas as pd
 
-def get_prices(symbol: str, start_time: datetime, interval: str='1h') -> pd.DataFrame:
+def get_prices(symbol: str, start_time: datetime, interval: str='1h', limit: int=1000) -> pd.DataFrame:
     url = 'https://api.binance.com/api/v3/klines'
 
     start_time=str(int(start_time.timestamp()*1000))
@@ -12,7 +12,7 @@ def get_prices(symbol: str, start_time: datetime, interval: str='1h') -> pd.Data
         'symbol' : symbol,
         'interval' : interval,
         'startTime' : start_time,
-        'limit': 1000
+        'limit': limit
     }
 
     response=requests.get(url, params=parameters)
@@ -30,7 +30,7 @@ def get_all_prices(symbol, start_time=datetime(2001, 9, 1), end_time=datetime.no
     prices_data = pd.DataFrame({})
 
     while (start_time.year!=end_time.year or start_time.month!=end_time.month):
-        prices_data = pd.concat([prices_data, get_prices(symbol=symbol, start_time=start_time)])
+        prices_data = pd.concat([prices_data, get_prices(symbol=symbol, start_time=start_time, limit=1000)])
         start_time = prices_data.DateTime.iloc[-1]+timedelta(hours=1)
         # print(f'Next Start Time of {coin_name} is: {start_time}')
     

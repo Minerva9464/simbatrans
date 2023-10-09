@@ -10,12 +10,12 @@ class EmbeddingLinear(nn.Module):
         #ro linear ke hover mibini khodesh bayas dare. yani aval zarb dar w mishe bad ba ye adadi jam mishe
         # in zamani farakhuni mishe ke yek shey azash besazim. va 1 vorodi migire o yek khoroji mide
 
-    def forward(self, inp:list) -> torch.tensor:
+    def forward(self, inp) -> torch.tensor:
         # in hamon tabe __call__ hast
         """ in tabe gheymat haro migir, embedingesh ro mide
 
         Args:
-            inp (list): batchsize az prices. ham toye encoder ham toye decoder. Aba@d: batchsize x seqlen
+            inp (np.array): batchsize az prices. ham toye encoder ham toye decoder. Aba@d: batchsize x seqlen
 
         Returns:
             torch.tensor: Matrise embedding. Aba@d: Batchsize x seqlen x dmodel
@@ -36,7 +36,7 @@ class EmbeddingTime2Vec(nn.Module):
         self.non_periodic_coeffs=nn.Linear(in_features=1, out_features=1)
         self.periodic_coeffs=nn.Linear(1, d_model-1)
 
-    def forward(self, inp:list) -> torch.tensor:
+    def forward(self, inp) -> torch.tensor:
         inp=torch.tensor(inp, dtype=torch.float)
         inp=inp.unsqueeze(-1)
         __non_periodic=self.non_periodic_coeffs(inp)
@@ -48,21 +48,23 @@ class EmbeddingTime2Vec(nn.Module):
 # ====================================================================
 
 class PositionalEncoding(nn.Module):
-    def __init__(self,seq_len, d_model) -> None:
+    def __init__(self, max_seq_len, d_model) -> None:
         super(PositionalEncoding, self).__init__()
-        pos_encoding=torch.zeros((seq_len,d_model), requires_grad=False)
+        pos_encoding=torch.zeros((max_seq_len, d_model), requires_grad=False)
 
-        pos=torch.arange(start=0, end=seq_len, step=1).unsqueeze(1)
+        pos=torch.arange(start=0, end=max_seq_len, step=1).unsqueeze(1)
         two_i=torch.arange(start=0, end=d_model-1, step=2).unsqueeze(0)
         theta=pos/(10000**(two_i/d_model))
 
         pos_encoding[:,::2]=torch.sin(theta)
         pos_encoding[:,1::2]=torch.cos(theta)
 
-        self.register_buffer('pos_enc', pos_encoding) # eine ine ke begi: self.pos_enc = pos_encoding. vali be soorate paydar dar RAM
+        self.register_buffer('pos_enc', pos_encoding.unsqueeze(0)) # eine ine ke begi: self.pos_enc = pos_encoding. vali be soorate paydar dar RAM
 
-    def forward(self, embedding): # batch_size x seqlen x dmodel
-        return embedding+self.pos_enc
+    def forward(self, embedding):
+        # embedding: batch_size x seqlen x dmodel
+        # self.pos_enc: 1 x max_seq_len x d_model
+        return embedding+self.pos_enc[:, :embedding.shape[1], :]
 
 # ====================================================================
 # ====================================================================
@@ -110,9 +112,9 @@ class MultiHeadAttention(nn.Module):
         Returns:
             attention: softmax(QK^T/(d_k)**1/2)V => batch_size, h, seqlen, dk
         """
-        attention_scores=torch.matmul(Q,K.transpose(2,3))/(self.d_k**.5)
+        attention_scores=torch.matmul(Q,K.transpose(2,3))/(self.d_k**.5) # batch_size x h x seq_len x seq_len
         if mask is not None:
-            attention_scores+=mask
+            attention_scores+=mask[:, :, :attention_scores.shape[2], :attention_scores.shape[2]]
         attention_scores_softmax=torch.softmax(attention_scores, dim=-1)
         return torch.matmul(attention_scores_softmax, V)
     
@@ -158,7 +160,6 @@ class FeedForward(nn.Module):
 
     def forward(self, x):
         """
-
         Args:
             x: batch_size, seq_len, d_model
 
@@ -214,7 +215,7 @@ class DecoderLayer(nn.Module):
     
 
 class Transformer(nn.Module):
-    def __init__(self, d_model, h, p, d_FF, N, seqlen_encoder, seqlen_decoder, f=None) -> None:
+    def __init__(self, d_model, h, p, d_FF, N, max_seqlen_encoder, max_seqlen_decoder, f=None) -> None:
         super().__init__()        
         if f is None: #yani lineare /yani f ro nadade pas az formoole linear mire
             self.input_embedding=EmbeddingLinear(d_model)
@@ -224,8 +225,8 @@ class Transformer(nn.Module):
             self.input_embedding=EmbeddingTime2Vec(d_model, f)
             self.output_embedding=EmbeddingTime2Vec(d_model, f)
 
-        self.positional_encoding_encoder=PositionalEncoding(seqlen_encoder, d_model)
-        self.positional_encoding_decoder=PositionalEncoding(seqlen_decoder, d_model)
+        self.positional_encoding_encoder=PositionalEncoding(max_seqlen_encoder, d_model)
+        self.positional_encoding_decoder=PositionalEncoding(max_seqlen_decoder, d_model)
 
         self.encoder_stack=nn.ModuleList([
             deepcopy(EncoderLayer(d_model, h, p, d_FF)) for _ in range(N)
@@ -245,14 +246,14 @@ class Transformer(nn.Module):
         ])
 
         self.linear_final=nn.Linear(d_model, 1)
-        self.mask_decoder=self.generate_mask(h, seqlen_decoder)
+        self.mask_decoder=self.generate_mask(max_seqlen_decoder)
 
-    def generate_mask(self, h, seqlen):
-        neg_inf=torch.ones((h, seqlen, seqlen))*-1e20
+    def generate_mask(self, seqlen):
+        neg_inf=torch.ones((1, 1, seqlen, seqlen))*-1e20
         mask=torch.triu(neg_inf, diagonal=1)
         return mask
     
-    def forward(self, inputs:list, outputs:list):
+    def forward(self, inputs, outputs):
         out_input_embedding=self.input_embedding(inputs)
         out_pos_encoding_encoder=self.positional_encoding_encoder(out_input_embedding)
         out_output_embedding=self.output_embedding(outputs)
