@@ -1,3 +1,1 @@
-CryptoName,h,N,Input Empedding,MAE,MSE
-Bitcoin,4,3,Time2Vec,0.1944720483613464,0.0699210258306197
-Bitcoin,4,3,Linear,0.209691306892431,0.06258976993695745
+CryptoName,h,N,Input Empedding,MAE,MSE, DateTime

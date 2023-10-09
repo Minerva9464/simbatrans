@@ -11,16 +11,16 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
                 learning_rate, loss_function
                 ):
     
-    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32').iloc[:5000, :]
+    device=torch.device('cuda:0')
+    torch.set_default_device(device)
 
-    crypto_prices=np.array(crypto_prices)
+    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32').iloc[:10000, :]
+
+    crypto_prices=torch.tensor(np.array(crypto_prices))
 
     len_crypto_prices=crypto_prices.shape[0]
     crypto_prices=crypto_prices[0: len_crypto_prices-(len_crypto_prices%batch_size),:] # bar batch_size bakhsh pazir bashe
     len_crypto_prices=crypto_prices.shape[0]
-
-    device=torch.device('cuda:0')
-    torch.set_default_device(device)
 
     transformer=Transformer(d_model, h, p, d_FF, N, seqlen_encoder, seqlen_decoder, f)
 
@@ -39,7 +39,7 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
 
             inputs=crypto_prices[row: row+batch_size, 0:seqlen_encoder]
             outputs=crypto_prices[row: row+batch_size, seqlen_encoder-1: -1]
-            targets=torch.tensor(crypto_prices[row: row+batch_size, seqlen_encoder:]) #chizi hast ke bayad behesh beresim
+            targets=crypto_prices[row: row+batch_size, seqlen_encoder:] #chizi hast ke bayad behesh beresim
 
             predicted_outputs=transformer.forward(inputs, outputs).squeeze()
             loss=loss_function.forward(predicted_outputs, targets)
