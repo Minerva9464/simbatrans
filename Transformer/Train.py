@@ -10,14 +10,18 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
                 seqlen_decoder, f, p, epoch_number, batch_size, 
                 learning_rate, loss_function
                 ):
+    device=torch.device('cuda:0')
+    torch.set_default_device(device)
     
-    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32').iloc[:5000, :]
+    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32').iloc[:10000, :]
 
     crypto_prices=torch.tensor(np.array(crypto_prices))
 
     len_crypto_prices=crypto_prices.shape[0]
     crypto_prices=crypto_prices[0: len_crypto_prices-(len_crypto_prices%batch_size),:] # bar batch_size bakhsh pazir bashe
     len_crypto_prices=crypto_prices.shape[0]
+
+    
 
     transformer=Transformer(d_model, h, p, d_FF, N, seqlen_encoder, seqlen_decoder, f)
 
