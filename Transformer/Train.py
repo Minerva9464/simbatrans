@@ -21,8 +21,6 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
     crypto_prices=crypto_prices[0: len_crypto_prices-(len_crypto_prices%batch_size),:] # bar batch_size bakhsh pazir bashe
     len_crypto_prices=crypto_prices.shape[0]
 
-    
-
     transformer=Transformer(d_model, h, p, d_FF, N, seqlen_encoder, seqlen_decoder, f)
 
     optimizer=optim.Adam(
@@ -40,7 +38,7 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
 
             inputs=crypto_prices[row: row+batch_size, 0:seqlen_encoder]
             outputs=crypto_prices[row: row+batch_size, seqlen_encoder-1: -1]
-            targets=crypto_prices[row: row+batch_size, seqlen_encoder:] #chizi hast ke bayad behesh beresim
+            targets=crypto_prices[row: row+batch_size, seqlen_encoder:] # chizi hast ke bayad behesh beresim
 
             predicted_outputs=transformer.forward(inputs, outputs).squeeze()
             loss=loss_function.forward(predicted_outputs, targets)
