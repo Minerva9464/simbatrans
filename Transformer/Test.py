@@ -41,7 +41,8 @@ def test_model(crypto_name, seqlen_encoder, seqlen_decoder, batch_size, h, N, f=
             targets=crypto_prices_scaled[row:row+batch_size, seqlen_encoder:]
             
             outputs=crypto_prices_scaled[row:row+batch_size, seqlen_encoder-1] # * IMPORTANT
-            outputs=outputs[:, np.newaxis] # chon outputs hamishe yek sotoon dare => dim: 200. vali mikhaim beshe 200 x 1
+            outputs=outputs.unsqueeze(1) # chon outputs hamishe yek sotoon dare => dim: 200. vali mikhaim beshe 200 x 1
+            print(outputs.shape)
 
             for prediction_step in range(seqlen_decoder):
                 predicted_outputs=learned_transformer(inputs, outputs).squeeze(-1)
