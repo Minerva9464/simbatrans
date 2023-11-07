@@ -38,22 +38,17 @@ def train_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder,
 
             inputs=crypto_prices[row: row+batch_size, 0:seqlen_encoder]
             outputs=crypto_prices[row: row+batch_size, seqlen_encoder-1: -1]
-<<<<<<< HEAD
-            targets=crypto_prices[row: row+batch_size, seqlen_encoder:] # 
-            chizi hast ke bayad behesh beresim
-=======
-            targets=crypto_prices[row: row+batch_size, seqlen_encoder:] # chizi hast ke bayad behesh beresim
->>>>>>> 16c0b406b6853f90fe4f08805f59f99eb83a9329
+        targets=crypto_prices[row: row+batch_size, seqlen_encoder:] # chizi hast ke bayad behesh beresim
 
-            predicted_outputs=transformer.forward(inputs, outputs).squeeze()
-            loss=loss_function.forward(predicted_outputs, targets)
-            loss.backward() # x.grad += dloss/dx
+        predicted_outputs=transformer.forward(inputs, outputs).squeeze()
+        loss=loss_function.forward(predicted_outputs, targets)
+        loss.backward() # x.grad += dloss/dx
 
-            optimizer.step() # x += -lr*x.grad
+        optimizer.step() # x += -lr*x.grad
             # print(loss.item())
         # print(f'Epoch: {epoch+1}, Loss: {loss.item()}')
 
-    torch.save(transformer, f'Models/{crypto_name} Model.pth')
+        torch.save(transformer, f'Models/{crypto_name} Model.pth')
         
 if __name__=='__main__':
     # Model Parameters
