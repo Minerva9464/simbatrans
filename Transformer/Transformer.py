@@ -1,4 +1,3 @@
-from typing import Any
 import torch
 import torch.nn as nn
 from copy import deepcopy
@@ -47,7 +46,7 @@ class EmbeddingTime2Vec(nn.Module):
 
 class PositionalEncoding(nn.Module):
     def __init__(self, max_seq_len, d_model) -> None:
-        super(PositionalEncoding, self).__init__()
+        super().__init__()
         pos_encoding=torch.zeros((max_seq_len, d_model), requires_grad=False)
 
         pos=torch.arange(start=0, end=max_seq_len, step=1).unsqueeze(1)
@@ -132,7 +131,7 @@ class AddAndNorm:
     def __init__(self, d_model) -> None:
         self.layer_norm=nn.LayerNorm(normalized_shape=d_model)
         
-    def __call__(self, x, y) -> Any:
+    def __call__(self, x, y):
         add=x+y
         return self.layer_norm(add)
 
