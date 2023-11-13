@@ -57,8 +57,8 @@ def test_model(crypto_name, seqlen_encoder, seqlen_decoder, batch_size, h, N, f=
             mae_loss_sum+=mae_loss.item()*batch_size
         mse = mse_loss_sum/len_bitcoin_prices
         mae = mae_loss_sum/len_bitcoin_prices    
-        # print(f'MSE Loss:{mse}')
-        # print(f'MAE Loss:{mae}')
+    #     print(f'MSE Loss:{mse}')
+    #     print(f'MAE Loss:{mae}')
 
     # if f is None:
     #     input_embedding='Linear'
