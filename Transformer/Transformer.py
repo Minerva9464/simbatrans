@@ -267,6 +267,7 @@ class Transformer(nn.Module):
             previous_out_decoder=out_decoder
 
         return self.linear_final(out_decoder)
+
     
 
 
