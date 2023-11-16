@@ -160,6 +160,8 @@ cython_debug/
 #.idea/
 
 *.pdf
-Processed Prices/
-Models/
+Processed Prices/*
+Models/*
+!Processed Prices/Scaler.csv
+!Models/Readme.txt
 
