@@ -162,6 +162,8 @@ cython_debug/
 *.pdf
 Processed Prices/*
 Models/*
-!Processed Prices/Scaler.csv
+Achievements/Preds&Actuals/*
+!Processed Prices/Scaler Std.csv
+!Processed Prices/Scaler MinMax.csv
 !Models/Readme.txt
-
+!Achievements/Preds&Actuals/Readme.txt

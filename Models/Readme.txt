@@ -1,1 +1,1 @@
-This folder must contains all learned models
+This folder must contains all learned models.

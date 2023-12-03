@@ -1,53 +1,68 @@
-from Test import test_model
+from Preprocessing import data_wrangling
 from Train import train_model
+from Test import test_model
+from Utils import rmse
+
 from torch import sin
-from torch.nn import L1Loss
-from tqdm import tqdm
 
 grid = [
-    {'h': 4, 'N': 3, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 4, 'N': 3, 'f': None, 'CryptoName': 'Bitcoin'},
-    {'h': 4, 'N': 6, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 4, 'N': 6, 'f': None, 'CryptoName': 'Bitcoin'},
-    {'h': 4, 'N': 12, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 4, 'N': 12, 'f': None, 'CryptoName': 'Bitcoin'},
-    
-    {'h': 8, 'N': 3, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 8, 'N': 3, 'f': None, 'CryptoName': 'Bitcoin'},
-    {'h': 8, 'N': 6, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 8, 'N': 6, 'f': None, 'CryptoName': 'Bitcoin'},
-    {'h': 8, 'N': 12, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 8, 'N': 12, 'f': None, 'CryptoName': 'Bitcoin'},
+    {
+        'd_model': 256, 'h': 8, 'N': 2, 'd_FF': 512,
+        'seqlen_encoder': 50, 'seqlen_decoder': 1, 'kernel_size': 1 
+        },
+        # {
+        # 'd_model': , 'h': , 'N': , 'd_FF': ,
+        # 'seqlen_encoder': , 'seqlen_decoder': , 'kernel_size': 
+        # }
+    ]
 
-    {'h': 12, 'N': 3, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 12, 'N': 3, 'f': None, 'CryptoName': 'Bitcoin'},
-    {'h': 12, 'N': 6, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 12, 'N': 6, 'f': None, 'CryptoName': 'Bitcoin'},
-    {'h': 12, 'N': 12, 'f': sin, 'CryptoName': 'Bitcoin'},
-    {'h': 12, 'N': 12, 'f': None, 'CryptoName': 'Bitcoin'},
-]
+interval='2H'
 
-d_model=512
-d_FF=2048
-seqlen_encoder=100
-seqlen_decoder=20 
+crypto_name='Bitcoin'
+f=sin
 p=0.1
+network_type='CNN'
 
-# Learning Parameters
-epoch_number=1
-batch_size_train=50
-batch_size_test=200
-learning_rate=1e-3
-loss_function=L1Loss()
+epoch_number=30
+batch_size=128
+loss_function=rmse
+lr_config={
+            'low': 1e-6,
+            'high': 1e-4,
+            'percentage_to_fall_down': 0.02,
+            'percentage_to_rest': 0.9,
+            'linearity': 'linear'
+            }
 
-for grid_node in tqdm(grid):
-    train_model(
-        grid_node['CryptoName'], d_model, grid_node['h'], grid_node['N'], d_FF, 
-        seqlen_encoder, seqlen_decoder, grid_node['f'], p, epoch_number, batch_size_train, 
-        learning_rate, loss_function
-        )
+for grid_node in grid:
+    d_model=grid_node['d_model']
+    h=grid_node['h']
+    N=grid_node['N']
+    d_FF=grid_node['d_FF']
+    seqlen_encoder=grid_node['seqlen_encoder']
+    seqlen_decoder=grid_node['seqlen_decoder']
+    kernel_size=grid_node['kernel_size']
     
-    test_model(
-        grid_node['CryptoName'], seqlen_encoder, seqlen_decoder,
-        batch_size_test, grid_node['h'], grid_node['N'], grid_node['f']
-        )
+    data_wrangling(crypto_name, seqlen_encoder, seqlen_decoder, freq=interval)
+
+    train_model(crypto_name, d_model, f, h, N, d_FF, p,
+                seqlen_encoder, seqlen_decoder, network_type, kernel_size,
+                epoch_number, batch_size, loss_function, lr_config
+                )
+    
+    test_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder, seqlen_decoder, 
+                kernel_size, batch_size
+                )
+
+    print(f'\nGrid Node: {str(grid_node)[1:-1]} has been completed!\n')
+    print('𓆩♡𓆪𓆩♡𓆪𓆩♡𓆪𓆩♡𓆪 ᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᩚᰔᩚᩚᰔᩚᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚᰔᩚ❦❦❦❦❦❦❦❦❦❦❦❦❦❦❦❦❦❦❦❦ꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄꨄ 𓆩♡𓆪𓆩♡𓆪𓆩♡𓆪𓆩♡𓆪\n')
+    
+
+# TODO
+# Prameters to test:
+# d_model | d_FF | seq_len_encoder | seq_len_decoder | h | N | Kernel Size | LR 
+# Network Type
+
+# TODO
+# Data to Save in Each Grid:
+# MSE | RMSE | MAE | R2 Score | MAPE | Accuracy | All Predicted Output | All Targets | Test Plots
