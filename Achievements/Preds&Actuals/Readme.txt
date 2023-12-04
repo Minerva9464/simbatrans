@@ -1,0 +1,1 @@
+This folder must contains all predictions and actual values for later plotting.

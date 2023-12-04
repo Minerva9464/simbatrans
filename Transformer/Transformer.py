@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from copy import deepcopy
 
 class EmbeddingLinear(nn.Module):
     def __init__(self, d_model: int):
@@ -20,7 +19,6 @@ class EmbeddingLinear(nn.Module):
             torch.tensor: Matrise embedding. Aba@d: Batchsize x seqlen x dmodel
         """
         inp=inp.unsqueeze(-1)
-        # return inp
         out=self.w_embedding(inp)
         return out
 
@@ -33,7 +31,7 @@ class EmbeddingTime2Vec(nn.Module):
         self.f=f
         self.non_periodic_coeffs=nn.Linear(in_features=1, out_features=1)
         self.periodic_coeffs=nn.Linear(1, d_model-1)
-
+        
     def forward(self, inp: torch.tensor) -> torch.tensor:
         inp=inp.unsqueeze(-1)
         __non_periodic=self.non_periodic_coeffs(inp)
@@ -111,8 +109,9 @@ class MultiHeadAttention(nn.Module):
         """
         attention_scores=torch.matmul(Q,K.transpose(2,3))/(self.d_k**.5) # batch_size x h x seq_len x seq_len
         if mask is not None:
-            attention_scores+=mask[:, :, :attention_scores.shape[2], :attention_scores.shape[2]]
+            attention_scores+=mask[:, :, :attention_scores.shape[-1], :attention_scores.shape[-1]]
         attention_scores_softmax=torch.softmax(attention_scores, dim=-1)
+
         return torch.matmul(attention_scores_softmax, V)
     
     def forward(self, Q, K, V, mask=None):
@@ -127,34 +126,72 @@ class MultiHeadAttention(nn.Module):
     
 # ====================================================================
 # ====================================================================
-class AddAndNorm:
+class AddAndNorm(nn.Module):
     def __init__(self, d_model) -> None:
+        super().__init__()
         self.layer_norm=nn.LayerNorm(normalized_shape=d_model)
+        # self.layer_norm.requires_grad_(False)
         
-    def __call__(self, x, y):
+    def forward(self, x, y):
         add=x+y
         return self.layer_norm(add)
 
 # ====================================================================
 # ====================================================================   
-class Dropout:
+class Dropout(nn.Module):
     def __init__(self, p) -> None:
+        super().__init__()
         self.dropout=nn.Dropout(p)
 
-    def __call__(self, x):
+    def forward(self, x):
         return self.dropout(x)
 
 # ====================================================================
 # ====================================================================
 class FeedForward(nn.Module):
-    def __init__(self, d_model, d_FF, p) -> None:
+    def __init__(self, d_model, d_FF, p, network_type, kernel_size=1) -> None:
+        """Choose Between two Feed Forward Networks: CNN and MLP.
+
+        Args:
+            d_model: Model Dimension
+            d_FF: Hideden Layer Neurons
+            p: Dropout
+            network_type (String): CNN or MLP
+            kernel_size (int, optional): If CNN is selected, network use this value. MUST BE ODD NUMBER. Defaults to 1.
+        """
         super().__init__()
+        self.network_type=network_type
+        
+        if network_type=='CNN':
+            assert kernel_size%2==1, 'Kernel Size must be odd number'
 
-        self.linear_layer1=nn.Linear(in_features=d_model, out_features=d_FF)
-        self.relu=nn.ReLU()
-        self.dropout=Dropout(p)
-        self.linear_layer2=nn.Linear(in_features=d_FF, out_features=d_model)
-
+            self.feed_forward_network = nn.Sequential(
+                nn.Conv1d(
+                    in_channels=d_model,
+                    out_channels=d_FF,
+                    kernel_size=kernel_size,
+                    padding=(kernel_size-1)//2,
+                    padding_mode='circular'
+                    ),
+                nn.ReLU(),
+                Dropout(p),
+                
+                nn.Conv1d(
+                    in_channels=d_FF, 
+                    out_channels=d_model, 
+                    kernel_size=kernel_size, 
+                    padding=(kernel_size-1)//2,
+                    padding_mode='circular'
+                    )
+                )
+        else:
+            self.feed_forward_network=nn.Sequential(
+                nn.Linear(in_features=d_model, out_features=d_FF),
+                nn.ReLU(),
+                Dropout(p),
+                nn.Linear(in_features=d_FF, out_features=d_model),
+                )
+        
     def forward(self, x):
         """
         Args:
@@ -163,17 +200,22 @@ class FeedForward(nn.Module):
         Returns:
             batch_size, seq_len, d_model
         """
-        return self.linear_layer2(self.dropout(self.relu(self.linear_layer1(x))))
+        if self.network_type=='CNN':
+            return self.feed_forward_network(x.transpose(-1,-2)).transpose(-1,-2)
+        else:
+            return self.feed_forward_network(x)
 
 # ====================================================================
 # ====================================================================
 class EncoderLayer(nn.Module):
-    def __init__(self, d_model, h, p, d_FF) -> None:
+    def __init__(self, d_model, h, p, d_FF, network_type, kernel_size) -> None:
         super().__init__()
         self.self_attention=MultiHeadAttention(d_model, h)
         self.add_norm=AddAndNorm(d_model)
-        self.feed_forward=FeedForward(d_model, d_FF, p)
+        self.feed_forward=FeedForward(d_model, d_FF, p, network_type=network_type, kernel_size=kernel_size)
         self.dropout=Dropout(p)
+        # TODO:
+        # AvgPooling after feed forward
 
     def forward(self, x):
         out_attention=self.self_attention.forward(x, x, x)
@@ -187,11 +229,11 @@ class EncoderLayer(nn.Module):
 # ====================================================================
 # ====================================================================
 class DecoderLayer(nn.Module):
-    def __init__(self, d_model, h, p, d_FF) -> None:
+    def __init__(self, d_model, h, p, d_FF, network_type, kernel_size) -> None:
         super().__init__()
         self.self_attention=MultiHeadAttention(d_model, h)
         self.add_norm=AddAndNorm(d_model)
-        self.feed_forward=FeedForward(d_model, d_FF, p)
+        self.feed_forward=FeedForward(d_model, d_FF, p, network_type=network_type, kernel_size=kernel_size)
         self.dropout=Dropout(p)
         self.cross_attention=MultiHeadAttention(d_model, h)
 
@@ -210,14 +252,17 @@ class DecoderLayer(nn.Module):
         out_add_norm_ff=self.add_norm(out_drop_ff, out_add_norm_cross_mha)
         return out_add_norm_ff
     
-
 class Transformer(nn.Module):
-    def __init__(self, d_model, h, p, d_FF, N, max_seqlen_encoder, max_seqlen_decoder, f=None) -> None:
+    def __init__(
+        self, d_model, f, h, N, d_FF, p, 
+        max_seqlen_encoder, max_seqlen_decoder, 
+        network_type, kernel_size
+        ):
+        
         super().__init__()        
         if f is None: #yani lineare /yani f ro nadade pas az formoole linear mire
             self.input_embedding=EmbeddingLinear(d_model)
             self.output_embedding=EmbeddingLinear(d_model)
-
         else:
             self.input_embedding=EmbeddingTime2Vec(d_model, f)
             self.output_embedding=EmbeddingTime2Vec(d_model, f)
@@ -226,28 +271,23 @@ class Transformer(nn.Module):
         self.positional_encoding_decoder=PositionalEncoding(max_seqlen_decoder, d_model)
 
         self.encoder_stack=nn.ModuleList([
-            deepcopy(EncoderLayer(d_model, h, p, d_FF)) for _ in range(N)
+            EncoderLayer(d_model, h, p, d_FF, network_type, kernel_size) for _ in range(N)
         ])
-
-        # N=6
-        # self.EncoderLayer1 = EncoderLayer(d_model, h, p, d_FF)
-        # self.EncoderLayer2 = EncoderLayer(d_model, h, p, d_FF)
-        # self.EncoderLayer3 = EncoderLayer(d_model, h, p, d_FF)
-        # self.EncoderLayer4 = EncoderLayer(d_model, h, p, d_FF)
-        # self.EncoderLayer5 = EncoderLayer(d_model, h, p, d_FF)
-        # self.EncoderLayer6 = EncoderLayer(d_model, h, p, d_FF)
-
+        # print(self.encoder_stack[0].feed_forward.linear_layer1.weight - self.encoder_stack[1].feed_forward.linear_layer1.weight)
 
         self.decoder_stack=nn.ModuleList([
-            deepcopy(DecoderLayer(d_model, h, p, d_FF)) for _ in range(N)
+            DecoderLayer(d_model, h, p, d_FF, network_type, kernel_size) for _ in range(N)
         ])
-
-        self.linear_final=nn.Linear(d_model, 1)
         self.mask_decoder=self.generate_mask(max_seqlen_decoder)
 
+        self.linear_final=nn.Linear(d_model, d_model)
+        self.pooling_final=nn.AvgPool1d(d_model)
+        # TODO:
+        # nn.MaxPool(AvgPool)
+        
     def generate_mask(self, seqlen):
         neg_inf=torch.ones((1, 1, seqlen, seqlen))*-1e20
-        mask=torch.triu(neg_inf, diagonal=1)
+        mask=torch.triu(neg_inf, diagonal=1).int()
         return mask
     
     def forward(self, inputs: torch.tensor, outputs: torch.tensor):
@@ -256,18 +296,15 @@ class Transformer(nn.Module):
         out_output_embedding=self.output_embedding(outputs)
         out_pos_encoding_decoder=self.positional_encoding_decoder(out_output_embedding)
 
-        previous_out_encoder=out_pos_encoding_encoder
+        out_encoder=out_pos_encoding_encoder
         for encoder in self.encoder_stack:
-            out_encoder=encoder(previous_out_encoder)
-            previous_out_encoder=out_encoder
+            encoder=encoder(out_encoder)
 
-        previous_out_decoder=out_pos_encoding_decoder
+        out_decoder=out_pos_encoding_decoder
         for decoder in self.decoder_stack:
-            out_decoder=decoder(previous_out_decoder, out_encoder, self.mask_decoder)
-            previous_out_decoder=out_decoder
+            out_decoder=decoder(out_decoder, out_encoder, self.mask_decoder)
 
-        return self.linear_final(out_decoder)
-
+        return self.pooling_final(self.linear_final(out_decoder))
     
 
 
