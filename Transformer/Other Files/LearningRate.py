@@ -10,7 +10,7 @@ def lr_function(low, up, epoch_number, percentage_to_fall_down, percentage_to_re
         # m = (up-low)/(epoch_number*percentage_to_fall_down - epoch_number*percentage_to_rest)
         # b = up - m*epoch_number*percentage_to_fall_down
         # return m*epoch+b
-        return (1+np.cos(np.pi * epoch/epoch_number))*up+low
+        return 1.5*(1-np.sin(np.pi * epoch/epoch_number))*up+low
 
 epoch_number = 500
 epochs = np.array(range(1,epoch_number+1))
@@ -20,7 +20,7 @@ up = 1e-2
 percentage_to_fall_down = 0.10
 percentage_to_rest = 0.70
 
-for epoch in range(epoch_number):
+for epoch in epochs:
     lrs = np.append(lrs, lr_function(
         low, up, epoch_number, percentage_to_fall_down, percentage_to_rest, epoch
     ))

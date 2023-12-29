@@ -1,12 +1,9 @@
 import Utils
 import torch
-import torch.nn as nn
+from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-from datetime import datetime
-import matplotlib.pyplot as plt
-
 
 def test_model(
     crypto_name, d_model, h, N, d_FF, seqlen_encoder, seqlen_decoder, kernel_size,
@@ -25,22 +22,24 @@ def test_model(
     crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Test.csv').astype('float32')
     crypto_prices=torch.tensor(np.array(crypto_prices))
 
-    learned_transformer=torch.load(f'Models/{crypto_name} Model.pth')
-
-    len_crypto_prices=crypto_prices.shape[0]
-    crypto_prices=crypto_prices[0: len_crypto_prices-(len_crypto_prices%batch_size),:]
-    len_crypto_prices=crypto_prices.shape[0]
-
     crypto_prices_scaled=Utils.scale(crypto_prices, 'Std', crypto_name)
+
+    crypto_prices_dataloader = DataLoader(
+        crypto_prices_scaled, 
+        batch_size,
+        generator=torch.Generator(device)
+        )
 
     all_targets=crypto_prices_scaled[:, seqlen_encoder:]
     all_predicted_outputs = torch.tensor([])
 
+    learned_transformer=torch.load(f'Models/{crypto_name} Model.pth')
+    learned_transformer.eval()
+    
     with torch.no_grad():
-        learned_transformer.eval()
-        for row in tqdm(range(0, len_crypto_prices, batch_size)): # Har Batch
-            inputs=crypto_prices_scaled[row: row+batch_size, 0:seqlen_encoder]
-            outputs=crypto_prices_scaled[row: row+batch_size, seqlen_encoder-1] # * IMPORTANT
+        for batch in tqdm(crypto_prices_dataloader): # Har Batch
+            inputs=batch[:, 0:seqlen_encoder]
+            outputs=batch[:, seqlen_encoder-1] # * IMPORTANT: Avvalesh ye doonast faghat
             outputs=outputs.unsqueeze(1) # chon outputs hamishe yek sotoon dare => dim: 200 (Batch_size: 200). vali mikhaim beshe 200 x 1
 
             for prediction_step in range(seqlen_decoder):
@@ -76,11 +75,11 @@ def test_model(
                                 f'{seqlen_encoder},{seqlen_decoder},{kernel_size}')
         
         pd.DataFrame(all_predicted_outputs).to_csv(
-            f'Achievements/Preds&Actual/All Predictions - {model_specs_file_name}.csv',
+            f'Achievements/Preds&Actuals/All Predictions - {model_specs_file_name}.csv',
             index=False
             )
         pd.DataFrame(all_targets).to_csv(
-            f'Achievements/Preds&Actual/All Targets - {model_specs_file_name}.csv', 
+            f'Achievements/Preds&Actuals/All Targets - {model_specs_file_name}.csv', 
             index=False
             )
 
@@ -94,12 +93,12 @@ def test_model(
             (0, -1)
             )
 
-        # Good Part
-        Utils.plot_prediction_test(
-            all_targets, all_predicted_outputs, 
-            model_specs_suptitle, 'Zoomed - ' + model_specs_file_name, 
-            (int(len_crypto_prices*0.77), int(len_crypto_prices*0.85))
-            )
+        # # Good Part
+        # Utils.plot_prediction_test(
+        #     all_targets, all_predicted_outputs, 
+        #     model_specs_suptitle, 'Zoomed - ' + model_specs_file_name, 
+        #     (int(len_crypto_prices*0.77), int(len_crypto_prices*0.85))
+        #     )
     
 # ===================================================================================================
     
@@ -114,4 +113,8 @@ if __name__=='__main__':
     kernel_size=1
 
     batch_size=1000
-    test_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder, seqlen_decoder, kernel_size, batch_size)
+    test_model(
+        crypto_name, d_model, h, N, d_FF, 
+        seqlen_encoder, seqlen_decoder, 
+        kernel_size, batch_size
+        )

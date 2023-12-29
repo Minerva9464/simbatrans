@@ -4,13 +4,13 @@ import torch.nn as nn
 class EmbeddingLinear(nn.Module):
     def __init__(self, d_model: int):
         super().__init__()
-        self.w_embedding=nn.Linear(in_features=1,out_features=d_model)
+        self.w_embedding=nn.Linear(in_features=1, out_features=d_model)
         #ro linear ke hover mibini khodesh bayas dare. yani aval zarb dar w mishe bad ba ye adadi jam mishe
         # in zamani farakhuni mishe ke yek shey azash besazim. va 1 vorodi migire o yek khoroji mide
 
     def forward(self, inp: torch.tensor) -> torch.tensor:
-        # in hamon tabe __call__ hast
-        """ in tabe gheymat haro migir, embedingesh ro mide
+        # in hamon tabe __call__ dar nn.Module hast
+        """ in tabe gheymat haro migire, embedingesh ro mide
 
         Args:
             inp (torch.tensor): batchsize az prices. ham toye encoder ham toye decoder. Aba@d: batchsize x seqlen
@@ -90,13 +90,6 @@ class MultiHeadAttention(nn.Module):
         seq_len=x.shape[1]
         return x.view(batch_size, seq_len, self.h, self.d_k).transpose(1,2).contiguous()
     
-    def concat_heads(self, x):
-        #x: batch_size* h*seqlen*dk
-        seq_len=x.shape[2]
-        batch_size=x.shape[0]
-
-        return x.transpose(1, 2).contiguous().view(batch_size, seq_len, self.d_model)
-    
     def scaled_dot_product_attention(self, Q, K, V, mask=None):
         """
         Args:
@@ -113,6 +106,16 @@ class MultiHeadAttention(nn.Module):
         attention_scores_softmax=torch.softmax(attention_scores, dim=-1)
 
         return torch.matmul(attention_scores_softmax, V)
+
+    def concat_heads(self, x):
+        #x: batch_size* h*seqlen*dk
+        seq_len=x.shape[2]
+        batch_size=x.shape[0]
+
+        return x.transpose(1, 2).contiguous().view(batch_size, seq_len, self.d_model)
+
+    def linear_output(self, concated_tensor):
+        return self.wO(concated_tensor)
     
     def forward(self, Q, K, V, mask=None):
         Q, K, V=self.generate_QKV(Q, K, V) # khorojie tabe ro unpack mikonim va 3 ta khoroji dare behemon barmigardone
@@ -122,7 +125,7 @@ class MultiHeadAttention(nn.Module):
         
         attention=self.scaled_dot_product_attention(Q, K, V, mask) #  h ta seqlen*dk mide behemon
         concated=self.concat_heads(attention)
-        return self.wO(concated)
+        return self.linear_output(concated)
     
 # ====================================================================
 # ====================================================================
@@ -150,7 +153,7 @@ class Dropout(nn.Module):
 # ====================================================================
 class FeedForward(nn.Module):
     def __init__(self, d_model, d_FF, p, network_type, kernel_size=1) -> None:
-        """Choose Between two Feed Forward Networks: CNN and MLP.
+        """Choose Between two Feed Forward Networks: CNN or MLP.
 
         Args:
             d_model: Model Dimension
@@ -165,24 +168,44 @@ class FeedForward(nn.Module):
         if network_type=='CNN':
             assert kernel_size%2==1, 'Kernel Size must be odd number'
 
-            self.feed_forward_network = nn.Sequential(
+            padding_mode='replicate' # [zeros, replicate, circular]
+            self.feed_forward_network=nn.Sequential(
                 nn.Conv1d(
                     in_channels=d_model,
-                    out_channels=d_FF,
+                    out_channels=d_FF*4,
                     kernel_size=kernel_size,
                     padding=(kernel_size-1)//2,
-                    padding_mode='circular'
+                    padding_mode=padding_mode
                     ),
                 nn.ReLU(),
                 Dropout(p),
-                
+                nn.Conv1d(
+                    in_channels=d_FF*4, 
+                    out_channels=d_FF//2, 
+                    kernel_size=kernel_size, 
+                    padding=(kernel_size-1)//2,
+                    padding_mode=padding_mode 
+                    ),
+                nn.ReLU(),
+                Dropout(p),
+                nn.Conv1d(
+                    in_channels=d_FF//2, 
+                    out_channels=d_FF, 
+                    kernel_size=kernel_size, 
+                    padding=(kernel_size-1)//2,
+                    padding_mode=padding_mode
+                    ),
+                nn.ReLU(),
+                Dropout(p),
                 nn.Conv1d(
                     in_channels=d_FF, 
                     out_channels=d_model, 
                     kernel_size=kernel_size, 
                     padding=(kernel_size-1)//2,
-                    padding_mode='circular'
+                    padding_mode=padding_mode
                     )
+                # TODO:
+                # test different padding modes
                 )
         else:
             self.feed_forward_network=nn.Sequential(
@@ -282,8 +305,6 @@ class Transformer(nn.Module):
 
         self.linear_final=nn.Linear(d_model, d_model)
         self.pooling_final=nn.AvgPool1d(d_model)
-        # TODO:
-        # nn.MaxPool(AvgPool)
         
     def generate_mask(self, seqlen):
         neg_inf=torch.ones((1, 1, seqlen, seqlen))*-1e20

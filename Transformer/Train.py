@@ -1,50 +1,53 @@
 from Transformer import Transformer
 import Utils
+# import sys
+# if 'torch' not in sys.modules:
+#     import torch
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
+import torch.optim as optim
 import torchsummary
 from torchmetrics.functional import r2_score
 import pandas as pd
 from tqdm import tqdm
-import torch.optim as optim
 import numpy as np
-
 
 def train_model(
     crypto_name, d_model, f, h, N, d_FF, p,
     seqlen_encoder, seqlen_decoder, network_type, kernel_size,
     epoch_number, batch_size, loss_function, lr_config
     ):
-    
+
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         device=torch.device('cuda:0')
+        torch.cuda.manual_seed(46) 
         print('Using GPU')
     else:
         device=torch.device('cpu')
+        torch.manual_seed(46)
         print('Using CPU')
         
     torch.set_default_device(device)
-    
-    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32')
-    crypto_prices=torch.tensor(np.array(crypto_prices))
 
-    len_crypto_prices=crypto_prices.shape[0]
-    crypto_prices=crypto_prices[0: len_crypto_prices-(len_crypto_prices%batch_size),:] # bar batch_size bakhsh pazir bashe
-    len_crypto_prices=crypto_prices.shape[0]
-
-    transformer=Transformer(d_model, f, h, N, d_FF, p, 
-                            seqlen_encoder, seqlen_decoder, 
-                            network_type, kernel_size
-                            )
-    
+    transformer=Transformer(
+        d_model, f, h, N, d_FF, p, 
+        seqlen_encoder, seqlen_decoder, 
+        network_type, kernel_size
+        )
+    # Initialzing all weights with Kaiming Uniform algorithm
     for p in transformer.parameters():
         if p.dim() > 1:
             nn.init.kaiming_uniform_(p, nonlinearity='relu')
 
     # ===============================================
-
-    torchsummary.summary(transformer, input_size=[(seqlen_encoder,), (seqlen_decoder,)], batch_size=batch_size)
+    # * Model Summary
+    torchsummary.summary(
+        transformer, 
+        input_size=[(seqlen_encoder,), (seqlen_decoder,)], 
+        batch_size=batch_size, device=device.type
+        )
 
     trainable_parameters=0
     params={'Name': [], 'Shape': [], 'Requires Grad':[]}
@@ -65,14 +68,17 @@ def train_model(
         
     params=pd.DataFrame(params)
     params.to_csv(f'Achievements/Model Parameters.csv', index=False)
-
+    
     # ===============================================
-    # Recale Test Data:
+    # * Reading Data:
+    crypto_prices=pd.read_csv(f'Processed Prices/{crypto_name} Train.csv').astype('float32')
+    crypto_prices=torch.tensor(np.array(crypto_prices))
+    # Rescaling target data
     all_targets=crypto_prices[:, seqlen_encoder:].contiguous().squeeze()
     all_targets=Utils.rescale(all_targets, 'Std', crypto_name)
     
     # ===============================================
-    # Learning:
+    # * Learning:
     optimizer=optim.Adam(
         params=transformer.parameters(),
         betas=(0.9,0.999),
@@ -87,17 +93,30 @@ def train_model(
     percentage_to_fall_down=lr_config['percentage_to_fall_down']
     percentage_to_rest=lr_config['percentage_to_rest']
     linearity=lr_config['linearity']
-    
+
+    # * Running Traing Epochs
     for epoch in range(1, epoch_number+1): # epoch=step_num
         all_predicted_outputs=torch.tensor([])
         
-        lr=Utils.lr_function(low, up, epoch_number, percentage_to_fall_down, percentage_to_rest, epoch, linearity)
+        lr=Utils.lr_function(
+            low, up, epoch_number, 
+            percentage_to_fall_down, percentage_to_rest, 
+            epoch, linearity
+            )
         optimizer.param_groups[0]['lr']=lr
+
+        # Shuffling data (because torch cannot do it properly!) and making the dataloader
+        crypto_prices=crypto_prices[:, torch.randperm(crypto_prices.shape[1])]
+        crypto_prices_dataloader = DataLoader(
+            crypto_prices, 
+            batch_size,
+            generator=torch.Generator(device)
+            )
         
-        for row in tqdm(range(0, len_crypto_prices, batch_size)):
-            inputs=crypto_prices[row: row+batch_size, 0:seqlen_encoder]
-            outputs=crypto_prices[row: row+batch_size, seqlen_encoder-1: -1]
-            targets=crypto_prices[row: row+batch_size, seqlen_encoder:].squeeze().contiguous() # chizi hast ke bayad behesh beresim
+        for batch in tqdm(crypto_prices_dataloader):
+            inputs=batch[:, 0:seqlen_encoder]
+            outputs=batch[:, seqlen_encoder-1: -1]
+            targets=batch[:, seqlen_encoder:].squeeze().contiguous() # chizi hast ke bayad behesh beresim
             
             predicted_outputs=transformer.forward(inputs, outputs).squeeze().contiguous()
             all_predicted_outputs=torch.concat((all_predicted_outputs, predicted_outputs), dim=0)
@@ -112,12 +131,13 @@ def train_model(
         loss_all_predictions=round(loss_function(all_predicted_outputs, all_targets).item(), 5)
         r2_score_all_predictions=round(r2_score(all_predicted_outputs, all_targets).item(), 5)
         accuracy_all_predicton=round(Utils.accuracy(all_predicted_outputs, all_targets).item(), 5)
-                
+
         print(f'Epoch: {epoch}, lr: {lr}')
-        print(f'\n{loss_function.__name__.upper()} Loss: {loss_all_predictions}')
-        print(f'\nR2 Score: {r2_score_all_predictions}')
-        print(f'\nAccuracy: {accuracy_all_predicton}%')
-        print('================')
+        print(f'{loss_function.__name__.upper()} Loss: {loss_all_predictions}')
+        print(f'R2 Score: {r2_score_all_predictions}')
+        print(f'Accuracy: {accuracy_all_predicton}%')
+        print('^^^^^^^================^^^^^^^\n')
+
 
     torch.save(transformer, f'Models/{crypto_name} Model.pth')
     # plot_prediction_train(all_targets, all_predicted_outputs, (4, 3), (3000,3020))
@@ -139,7 +159,7 @@ if __name__=='__main__':
     kernel_size=1
     
     # Learning Parameters
-    epoch_number=200
+    epoch_number=250
     batch_size=128
     
     loss_functions={

@@ -9,7 +9,11 @@ from torchmetrics.functional import mean_absolute_percentage_error, r2_score
 
 # ===================================================================================================
 
-def lr_function(low, up, epoch_number, percentage_to_fall_down, percentage_to_rest, epoch, linearity):
+def lr_function(
+    low, up, epoch_number, 
+    percentage_to_fall_down, percentage_to_rest, 
+    epoch, linearity
+    ):
     if epoch < epoch_number*percentage_to_fall_down:
         return up
     elif epoch > epoch_number*percentage_to_rest:
@@ -20,7 +24,8 @@ def lr_function(low, up, epoch_number, percentage_to_fall_down, percentage_to_re
             b=up - m*epoch_number*percentage_to_fall_down
             return m*epoch+b
         else:
-            return 0.5*(1+np.sin(np.pi * epoch/epoch_number))*up + low
+            return 0.5*(1+1*np.sin(np.pi * epoch/epoch_number))*up + low
+        # TODO: change coeffiecnts of above formula
 
 # ===================================================================================================
 
