@@ -133,10 +133,10 @@ def train_model(
         accuracy_all_predicton=round(Utils.accuracy(all_predicted_outputs, all_targets).item(), 5)
 
         print(f'Epoch: {epoch}, lr: {lr}')
-        print(f'\n{loss_function.__name__.upper()} Loss: {loss_all_predictions}')
-        print(f'\nR2 Score: {r2_score_all_predictions}')
-        print(f'\nAccuracy: {accuracy_all_predicton}%')
-        print('================')
+        print(f'{loss_function.__name__.upper()} Loss: {loss_all_predictions}')
+        print(f'R2 Score: {r2_score_all_predictions}')
+        print(f'Accuracy: {accuracy_all_predicton}%')
+        print('^^^^^^^================^^^^^^^\n')
 
 
     torch.save(transformer, f'Models/{crypto_name} Model.pth')

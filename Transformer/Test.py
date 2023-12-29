@@ -34,9 +34,9 @@ def test_model(
     all_predicted_outputs = torch.tensor([])
 
     learned_transformer=torch.load(f'Models/{crypto_name} Model.pth')
+    learned_transformer.eval()
     
     with torch.no_grad():
-        learned_transformer.eval()
         for batch in tqdm(crypto_prices_dataloader): # Har Batch
             inputs=batch[:, 0:seqlen_encoder]
             outputs=batch[:, seqlen_encoder-1] # * IMPORTANT: Avvalesh ye doonast faghat
@@ -113,4 +113,8 @@ if __name__=='__main__':
     kernel_size=1
 
     batch_size=1000
-    test_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder, seqlen_decoder, kernel_size, batch_size)
+    test_model(
+        crypto_name, d_model, h, N, d_FF, 
+        seqlen_encoder, seqlen_decoder, 
+        kernel_size, batch_size
+        )
