@@ -76,6 +76,11 @@ def train_model(
     # Rescaling target data
     all_targets=crypto_prices[:, seqlen_encoder:].contiguous().squeeze()
     all_targets=Utils.rescale(all_targets, 'Std', crypto_name)
+    crypto_prices_dataloader = DataLoader(
+        crypto_prices, 
+        batch_size,
+        generator=torch.Generator(device)
+    )
     
     # ===============================================
     # * Learning:
@@ -104,14 +109,6 @@ def train_model(
             epoch, linearity
             )
         optimizer.param_groups[0]['lr']=lr
-
-        # Shuffling data (because torch cannot do it properly!) and making the dataloader
-        crypto_prices=crypto_prices[:, torch.randperm(crypto_prices.shape[1])]
-        crypto_prices_dataloader = DataLoader(
-            crypto_prices, 
-            batch_size,
-            generator=torch.Generator(device)
-            )
         
         for batch in tqdm(crypto_prices_dataloader):
             inputs=batch[:, 0:seqlen_encoder]

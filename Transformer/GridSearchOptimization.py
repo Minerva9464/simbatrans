@@ -2,13 +2,12 @@ from Preprocessing import data_wrangling
 from Train import train_model
 from Test import test_model
 from Utils import rmse
-
 from torch import sin
 
 grid = [
     {
         'd_model': 256, 'h': 8, 'N': 2, 'd_FF': 512,
-        'seqlen_encoder': 50, 'seqlen_decoder': 1, 'kernel_size': 1
+        'seqlen_encoder': 50, 'seqlen_decoder': 1, 'kernel_size': 3
         },
         # {
         # 'd_model': , 'h': , 'N': , 'd_FF': ,
@@ -24,16 +23,16 @@ f=sin
 p=0.1
 network_type='CNN'
 
-epoch_number=2
+epoch_number=300
 batch_size=128
 loss_function=rmse
 lr_config={
-            'low': 1e-4,
-            'high': 1e-4,
-            'percentage_to_fall_down': 0.02,
-            'percentage_to_rest': 0.9,
-            'linearity': 'linear'
-            }
+    'high': 1e-4,
+    'low': 1e-5,
+    'percentage_to_fall_down': 0.02,
+    'percentage_to_rest': 0.5,
+    'linearity': 'cos'
+    }
 
 for grid_node in grid:
     d_model=grid_node['d_model']
@@ -55,7 +54,7 @@ for grid_node in grid:
 
     print('The Test Has Just Begun!')
     test_model(crypto_name, d_model, h, N, d_FF, seqlen_encoder, seqlen_decoder, 
-                kernel_size, batch_size*4
+                kernel_size, batch_size*4, note='ّIni ke alan hast'
                 )
 
     print(f'\nGrid Node: {str(grid_node)[1:-1]} has been completed!\n')

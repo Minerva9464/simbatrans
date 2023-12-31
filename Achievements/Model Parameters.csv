@@ -17,13 +17,13 @@ encoder_stack.0.self_attention.wO.weight,"(256, 256)",True
 encoder_stack.0.self_attention.wO.bias,"(256,)",True
 encoder_stack.0.add_norm.layer_norm.weight,"(256,)",True
 encoder_stack.0.add_norm.layer_norm.bias,"(256,)",True
-encoder_stack.0.feed_forward.feed_forward_network.0.weight,"(2048, 256, 1)",True
+encoder_stack.0.feed_forward.feed_forward_network.0.weight,"(2048, 256, 3)",True
 encoder_stack.0.feed_forward.feed_forward_network.0.bias,"(2048,)",True
-encoder_stack.0.feed_forward.feed_forward_network.3.weight,"(256, 2048, 1)",True
+encoder_stack.0.feed_forward.feed_forward_network.3.weight,"(256, 2048, 3)",True
 encoder_stack.0.feed_forward.feed_forward_network.3.bias,"(256,)",True
-encoder_stack.0.feed_forward.feed_forward_network.6.weight,"(512, 256, 1)",True
+encoder_stack.0.feed_forward.feed_forward_network.6.weight,"(512, 256, 3)",True
 encoder_stack.0.feed_forward.feed_forward_network.6.bias,"(512,)",True
-encoder_stack.0.feed_forward.feed_forward_network.9.weight,"(256, 512, 1)",True
+encoder_stack.0.feed_forward.feed_forward_network.9.weight,"(256, 512, 3)",True
 encoder_stack.0.feed_forward.feed_forward_network.9.bias,"(256,)",True
 encoder_stack.1.self_attention.wQ.weight,"(256, 256)",True
 encoder_stack.1.self_attention.wQ.bias,"(256,)",True
@@ -35,13 +35,13 @@ encoder_stack.1.self_attention.wO.weight,"(256, 256)",True
 encoder_stack.1.self_attention.wO.bias,"(256,)",True
 encoder_stack.1.add_norm.layer_norm.weight,"(256,)",True
 encoder_stack.1.add_norm.layer_norm.bias,"(256,)",True
-encoder_stack.1.feed_forward.feed_forward_network.0.weight,"(2048, 256, 1)",True
+encoder_stack.1.feed_forward.feed_forward_network.0.weight,"(2048, 256, 3)",True
 encoder_stack.1.feed_forward.feed_forward_network.0.bias,"(2048,)",True
-encoder_stack.1.feed_forward.feed_forward_network.3.weight,"(256, 2048, 1)",True
+encoder_stack.1.feed_forward.feed_forward_network.3.weight,"(256, 2048, 3)",True
 encoder_stack.1.feed_forward.feed_forward_network.3.bias,"(256,)",True
-encoder_stack.1.feed_forward.feed_forward_network.6.weight,"(512, 256, 1)",True
+encoder_stack.1.feed_forward.feed_forward_network.6.weight,"(512, 256, 3)",True
 encoder_stack.1.feed_forward.feed_forward_network.6.bias,"(512,)",True
-encoder_stack.1.feed_forward.feed_forward_network.9.weight,"(256, 512, 1)",True
+encoder_stack.1.feed_forward.feed_forward_network.9.weight,"(256, 512, 3)",True
 encoder_stack.1.feed_forward.feed_forward_network.9.bias,"(256,)",True
 decoder_stack.0.self_attention.wQ.weight,"(256, 256)",True
 decoder_stack.0.self_attention.wQ.bias,"(256,)",True
@@ -53,13 +53,13 @@ decoder_stack.0.self_attention.wO.weight,"(256, 256)",True
 decoder_stack.0.self_attention.wO.bias,"(256,)",True
 decoder_stack.0.add_norm.layer_norm.weight,"(256,)",True
 decoder_stack.0.add_norm.layer_norm.bias,"(256,)",True
-decoder_stack.0.feed_forward.feed_forward_network.0.weight,"(2048, 256, 1)",True
+decoder_stack.0.feed_forward.feed_forward_network.0.weight,"(2048, 256, 3)",True
 decoder_stack.0.feed_forward.feed_forward_network.0.bias,"(2048,)",True
-decoder_stack.0.feed_forward.feed_forward_network.3.weight,"(256, 2048, 1)",True
+decoder_stack.0.feed_forward.feed_forward_network.3.weight,"(256, 2048, 3)",True
 decoder_stack.0.feed_forward.feed_forward_network.3.bias,"(256,)",True
-decoder_stack.0.feed_forward.feed_forward_network.6.weight,"(512, 256, 1)",True
+decoder_stack.0.feed_forward.feed_forward_network.6.weight,"(512, 256, 3)",True
 decoder_stack.0.feed_forward.feed_forward_network.6.bias,"(512,)",True
-decoder_stack.0.feed_forward.feed_forward_network.9.weight,"(256, 512, 1)",True
+decoder_stack.0.feed_forward.feed_forward_network.9.weight,"(256, 512, 3)",True
 decoder_stack.0.feed_forward.feed_forward_network.9.bias,"(256,)",True
 decoder_stack.0.cross_attention.wQ.weight,"(256, 256)",True
 decoder_stack.0.cross_attention.wQ.bias,"(256,)",True
@@ -79,13 +79,13 @@ decoder_stack.1.self_attention.wO.weight,"(256, 256)",True
 decoder_stack.1.self_attention.wO.bias,"(256,)",True
 decoder_stack.1.add_norm.layer_norm.weight,"(256,)",True
 decoder_stack.1.add_norm.layer_norm.bias,"(256,)",True
-decoder_stack.1.feed_forward.feed_forward_network.0.weight,"(2048, 256, 1)",True
+decoder_stack.1.feed_forward.feed_forward_network.0.weight,"(2048, 256, 3)",True
 decoder_stack.1.feed_forward.feed_forward_network.0.bias,"(2048,)",True
-decoder_stack.1.feed_forward.feed_forward_network.3.weight,"(256, 2048, 1)",True
+decoder_stack.1.feed_forward.feed_forward_network.3.weight,"(256, 2048, 3)",True
 decoder_stack.1.feed_forward.feed_forward_network.3.bias,"(256,)",True
-decoder_stack.1.feed_forward.feed_forward_network.6.weight,"(512, 256, 1)",True
+decoder_stack.1.feed_forward.feed_forward_network.6.weight,"(512, 256, 3)",True
 decoder_stack.1.feed_forward.feed_forward_network.6.bias,"(512,)",True
-decoder_stack.1.feed_forward.feed_forward_network.9.weight,"(256, 512, 1)",True
+decoder_stack.1.feed_forward.feed_forward_network.9.weight,"(256, 512, 3)",True
 decoder_stack.1.feed_forward.feed_forward_network.9.bias,"(256,)",True
 decoder_stack.1.cross_attention.wQ.weight,"(256, 256)",True
 decoder_stack.1.cross_attention.wQ.bias,"(256,)",True
@@ -95,6 +95,6 @@ decoder_stack.1.cross_attention.wV.weight,"(256, 256)",True
 decoder_stack.1.cross_attention.wV.bias,"(256,)",True
 decoder_stack.1.cross_attention.wO.weight,"(256, 256)",True
 decoder_stack.1.cross_attention.wO.bias,"(256,)",True
-linear_final.weight,"(256, 256)",True
-linear_final.bias,"(256,)",True
-Total Parameters,6903040,-
+conv_final.weight,"(512, 256, 3)",True
+conv_final.bias,"(512,)",True
+Total Parameters,17716736,-

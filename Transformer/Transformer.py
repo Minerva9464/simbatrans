@@ -168,7 +168,7 @@ class FeedForward(nn.Module):
         if network_type=='CNN':
             assert kernel_size%2==1, 'Kernel Size must be odd number'
 
-            padding_mode='replicate' # [zeros, replicate, circular]
+            padding_mode='zeros'
             self.feed_forward_network=nn.Sequential(
                 nn.Conv1d(
                     in_channels=d_model,
@@ -204,8 +204,6 @@ class FeedForward(nn.Module):
                     padding=(kernel_size-1)//2,
                     padding_mode=padding_mode
                     )
-                # TODO:
-                # test different padding modes
                 )
         else:
             self.feed_forward_network=nn.Sequential(
@@ -303,8 +301,13 @@ class Transformer(nn.Module):
         ])
         self.mask_decoder=self.generate_mask(max_seqlen_decoder)
 
-        self.linear_final=nn.Linear(d_model, d_model)
-        self.pooling_final=nn.AvgPool1d(d_model)
+        self.conv_final=nn.Conv1d(d_model, 
+                                    d_FF, 
+                                    kernel_size, 
+                                    padding=(kernel_size-1)//2, 
+                                    padding_mode='zeros'
+                                    )
+        self.pooling_final=nn.AvgPool1d(d_FF)
         
     def generate_mask(self, seqlen):
         neg_inf=torch.ones((1, 1, seqlen, seqlen))*-1e20
@@ -325,7 +328,8 @@ class Transformer(nn.Module):
         for decoder in self.decoder_stack:
             out_decoder=decoder(out_decoder, out_encoder, self.mask_decoder)
 
-        return self.pooling_final(self.linear_final(out_decoder))
+        return self.pooling_final(self.conv_final(out_decoder.transpose(-1,-2)).transpose(-1,-2))
+        
     
 
 
