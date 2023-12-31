@@ -24,7 +24,7 @@ def lr_function(
             b=up - m*epoch_number*percentage_to_fall_down
             return m*epoch+b
         else:
-            return 0.5*(1+1*np.sin(np.pi * epoch/epoch_number))*up + low
+            return 0.5*(1+1.1*np.cos(np.pi * epoch/epoch_number))*up+low
         # TODO: change coeffiecnts of above formula
 
 # ===================================================================================================
@@ -147,7 +147,7 @@ def plot_prediction_test(
 
 def save_results(
     crypto_name, d_model, h, N, d_FF, seqlen_encoder, seqlen_decoder, kernel_size,
-    rmse, mse, mae, mape, r2, accuracy
+    rmse, mse, mae, mape, r2, accuracy, note
     ):
 
     new_row=pd.DataFrame(
@@ -166,6 +166,7 @@ def save_results(
             'MAPE': [mape],
             'R2': [r2],
             'Accuracy': [accuracy],
+            'Notes': [note],
             'DateTime': [datetime.now()],
             }
         )

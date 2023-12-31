@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 def test_model(
     crypto_name, d_model, h, N, d_FF, seqlen_encoder, seqlen_decoder, kernel_size,
-    batch_size
+    batch_size, note
     ):
     
     if torch.cuda.is_available():
@@ -68,7 +68,7 @@ def test_model(
         Utils.save_results(
             crypto_name, d_model, h, N, d_FF, 
             seqlen_encoder, seqlen_decoder, kernel_size, 
-            rmse, mse, mae, mape, r2, accuracy
+            rmse, mse, mae, mape, r2, accuracy, note
             )
 
         model_specs_file_name=(f'{crypto_name},{d_model},{h},{N},{d_FF},'
